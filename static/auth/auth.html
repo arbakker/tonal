@@ -1,0 +1,15 @@
+<div ng-controller="AuthController" class="navbar-form navbar-right" role="search" >
+   <form ng-submit="myAuthService.submit()">
+   <div class="form-group">
+    <input class="form-control input-sm" ng-model="myAuthService.user.username" type="text" name="user" placeholder="Username" />
+    </div>
+    <div class="form-group">
+    <input class="form-control input-sm"  ng-model="myAuthService.user.password" type="password" name="pass" placeholder="Password" />
+    </div>
+       <div class="form-group">
+    <input class="form-control input-sm" type="submit" value="Login" />
+    </div>
+  </form>
+   <p>{{myAuthService.message}}</p>
+    <p ng-if="myAuthService.authenticated">Authenticated</p>
+</div>

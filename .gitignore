@@ -1,0 +1,12 @@
+# Virtualenv
+.Python
+bin
+lib
+include
+share
+bower_components/
+node_modules/
+*.py[cod]
+
+# Mac OS X custom attribute files
+.DS_Store

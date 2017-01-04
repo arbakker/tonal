@@ -1,0 +1,13 @@
+<div class="container-fluid">
+	<h1>{{artist}}</h1>
+	<table  class="table">
+<tr>
+		<th>Albums
+		</th>
+	</tr>
+	<tr ng-repeat="album in albums">
+		<td><a ng-href="#/artist/{{artist}}/{{album}}">{{album}}</a>
+		</td>
+	</tr>	
+		</table>
+</div>

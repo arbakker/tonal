@@ -1,0 +1,25 @@
+<div class="container-fluid">
+<div class="row"> <div class="col-xs-12" align="center">
+    <h1><a ng-href="#/artist/{{album.albumartist}}">{{album.albumartist}}</a> - {{album.title}} ({{album.year}})</h1></div>
+    </div>
+    <div class="row">
+        <div class="col-xs-12 col-md-5" align="center">
+            <img class="img-responsive" style="max-width:20em;" http-src="http://localhost:5000/api/v1.0/artwork/artists/{{album.albumartist}}/{{album.title}}">
+        </div>
+        <div class="col-xs-12 col-md-7">
+            <button class="btn btn-default"  ng-click='PlayerService.addAlbum(album.tracks);'>Add to playlist</button>
+            <table class="table">
+                <tr >
+                    <th>Songs
+                    </th>
+                </tr>
+                <tr ng-repeat="track in album.tracks">
+                    <td>
+                        <a ng-click='PlayerService.add(track);'>{{track.track}}. {{track.title}}</a>
+                    </td>
+                </tr>
+            </table>
+        </div>
+
+    </div>
+</div>

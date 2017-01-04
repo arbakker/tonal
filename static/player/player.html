@@ -1,0 +1,75 @@
+<script type="text/ng-template" id="myModalContent.html">
+        <div class="modal-header">
+            <h3 class="modal-title" id="modal-title">I'm a modal!</h3>
+        </div>
+        <div class="modal-body" id="modal-body">
+            <ul>
+                Something.
+            </ul>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-primary" type="button" ng-click="$ctrl.ok()">OK</button>
+            <button class="btn btn-warning" type="button" ng-click="$ctrl.cancel()">Cancel</button>
+        </div>
+    </script>
+
+<div class="container-fluid">
+
+ <div class="row">
+    <div class="col-xs-12"  align="center">
+        <div class="btn-group" role="group" aria-label="...">
+            <button type="button" class="btn btn-default">
+                <span class="glyphicon glyphicon-step-backward" ng-click="myPlayerService.previous()"></span>
+            </button>
+            <button type="button" class="btn btn-default">
+                <span class="glyphicon glyphicon-play" ng-click="myPlayerService.play()"></span>
+            </button>
+            <button type="button" class="btn btn-default">
+               <span class="glyphicon glyphicon-pause" ng-click="myPlayerService.pause()"></span>
+            </button>
+            <button type="button" class="btn btn-default">
+                 <span class="glyphicon glyphicon-step-forward" ng-click="myPlayerService.next()"></span>
+            </button>
+        </div>
+        <button type="button" class="btn btn-primary" ng-model="myPlayerService.repeat" uib-btn-checkbox btn-checkbox-true="true" btn-checkbox-false="false">
+        Repeat
+        </button>
+         <button type="button" class="btn btn-primary" ng-model="myPlayerService.shuffle" uib-btn-checkbox btn-checkbox-true="true" btn-checkbox-false="false">
+        Shuffle
+        </button>
+
+        <div><span>Now playing:</span> <span>{{myPlayerService.currentSongString}}</span></div>
+        <img 
+        http-src="http://localhost:5000/api/v1.0/artwork/artists/{{myPlayerService.currentSong.albumartist}}/{{myPlayerService.currentSong.album}}" 
+        alt="Album cover" 
+        class="img-responsive" 
+        style="max-width:15em;" 
+        ng-hide="myPlayerService.currentSongString=='Paused' || myPlayerService.currentSong.isRadio"
+        />  
+        <!---->
+    </div>
+
+
+    <button type="button" class="btn btn-default" ng-click="isCollapsed = !isCollapsed">Toggle playlist</button>
+</div>
+
+    <div class="row" uib-collapse="isCollapsed">
+     <div class="col-xs-12"  align="center" >
+        <h1>Playlist  <button type="button" class="btn btn-default btn-sml" ng-show='myPlayerService.trackList.length>0' title="Clear playlist" >
+            <span class="glyphicon glyphicon-remove" ng-click="myPlayerService.clearPlaylist();"> </span>
+        </button> </h1>
+
+        <table class="table" >
+        <tr ng-repeat="track in myPlayerService.trackList track by $index" 
+            ng-class="{true: 'active', false: 'inactive'}[ $index== myPlayerService.currentIndex]"
+            ng-click="myPlayerService.playTrack(track)" >
+           <td><button  title="Remove from playlist" type="button" class="btn btn-default btn-sm"  ng-click="myPlayerService.remove(track)" ><span class="glyphicon glyphicon-remove" ></span></button></td>
+           <td ng-if="!track.isRadio">{{track.artist}} - {{track.title}}</td>
+           <td ng-if="track.isRadio">{{track.title}}</td>
+        </tr>
+
+        </table>
+        
+    </div>   
+</div>
+</div>
