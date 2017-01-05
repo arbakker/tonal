@@ -13,43 +13,21 @@ from tempfile import NamedTemporaryFile
 from shutil import copyfileobj
 import urllib.parse as urlparse
 import os
-from flask_jwt import JWT, jwt_required, current_identity
+from flask_jwt import JWT, jwt_required, current_identity,JWTError
 from werkzeug.security import safe_str_cmp
-
-
-basicAuth = HTTPBasicAuth()
-tokenAuth = HTTPTokenAuth(scheme='Token')
-
-dbConnectionString='sqlite:///music.db'
-e = create_engine(dbConnectionString)
+from datetime import datetime, timedelta
+import jwt  as pyjwt
 
 app = Flask(__name__)
+dbConnectionString='sqlite:///music.db'
+rootpath="/api/v1.0"
 app.config['SQLALCHEMY_DATABASE_URI'] = dbConnectionString
 app.config['SECRET_KEY']='\xcafW-\xbeX\x98-\x1a\xb2g\xc1\x0e\x87\xb2\x83[\xa0\x0fi/\x18\x85\xda'
+app.config['JWT_AUTH_URL_RULE']=rootpath+"/token"
+app.config['JWT_EXPIRATION_DELTA']=timedelta(seconds=1)
 
-db = SQLAlchemy(app)
-
-
-api = Api(app)
 app._static_folder = os.path.abspath("static/")
-rootpath="/api/v1.0"
 
-@tokenAuth.verify_token
-def verify_token(token):
-    url=request.url
-    print(url)
-    if not token:
-        parsed = urlparse.urlparse(url)
-        token = urlparse.parse_qs(parsed.query)['token']
-        if len(token)>0:
-            token=token[0]
-    user = User.verify_auth_token(token)
-    if not user:
-        return False
-    print("userid: {}".format(user))
-    return True
-    
-@basicAuth.verify_password
 def verify_password(username, password):
     # first try to authenticate by token
     print("user: {},password: {}".format(username,password))
@@ -60,8 +38,65 @@ def verify_password(username, password):
     g.user=user  
     return True
 
+def authenticate(username, password):
+    url=request.url
+    print(url)
+    print("jwt auth")
+    if verify_password(username,password):
+        return g.user
+
+def identity(payload):
+    user_id = payload['identity']
+    user= User.query.filter_by(id = user_id).first()
+    g.user=user
+    return user
+
+def parse_token(req):
+    token = req.headers.get('Authorization').split()[1]
+    return pyjwt.decode(token, app.config['SECRET_KEY'], algorithms='HS256')
+
+def create_token(user):
+    payload = {
+        # subject
+        'sub': user.id,
+        #issued at
+        'iat': datetime.utcnow(),
+        #expiry
+        'exp': datetime.utcnow() + app.config['JWT_EXPIRATION_DELTA']
+    }
+    token = pyjwt.encode(payload, app.config['SECRET_KEY'], algorithm='HS256')
+    return token.decode('unicode_escape')
+
+class ExceptionAwareApi(Api):
+    def handle_error(self, e):
+        if isinstance(e, JWTError):
+            print("JWTError")
+            code = 401
+            data = {'status_code': code, 'message': "Token is expired."}
+        elif isinstance(e, pyjwt.exceptions.ExpiredSignatureError):
+            print("ExpiredSignatureError")
+            code = 401
+            data = {'status_code': code, 'message': "Token is expired."}
+        else:
+            # Did not match a custom exception, continue normally
+            return super(ExceptionAwareApi, self).handle_error(e)
+        return self.make_response(data, code)
+
+
+
+e = create_engine(dbConnectionString)
+db = SQLAlchemy(app)
+
+api = ExceptionAwareApi(app)
+jwt = JWT(app, authenticate, identity)
+
 
 class User(db.Model):
+    def __init__(self, id, username, password_hash):
+        self.id = id
+        self.username = username
+        self.password_hash = password_hash
+
     __tablename__ = 'users'
     id = db.Column(db.Integer, primary_key = True)
     username = db.Column(db.String(32), index = True)
@@ -117,7 +152,7 @@ def serve_static(filename):
     return send_from_directory(os.path.join(root_dir, 'static', 'js'),   filename)
 
 class Artwork(Resource):
-    @tokenAuth.login_required
+    @jwt_required()
     def get(self,albumartist,album):
         conn = e.connect()
         queryString="select * from items where albumartist='{}' and album='{}' order by track ASC".format(albumartist,album)
@@ -140,7 +175,7 @@ class Artwork(Resource):
         
 
 class Albums(Resource):
-    @tokenAuth.login_required 
+    @jwt_required()
     def get(self):
         sort = request.args.get("sort")
         #Connect to databse
@@ -153,7 +188,7 @@ class Albums(Resource):
         return {'albums': [{'album':i[9],'albumartist':i[4]} for i in query.cursor.fetchall()]}
 
 class Albumartists(Resource):
-    @tokenAuth.login_required
+    @jwt_required()
     def get(self):
         conn = e.connect()
         query = conn.execute("select distinct albumartist from albums")
@@ -165,7 +200,7 @@ class Albumartists(Resource):
         #We can have PUT,DELETE,POST here. But in our API GET implementation is sufficient
 
 class Albumartist(Resource):
-    @tokenAuth.login_required
+    @jwt_required()
     def get(self,albumartist):
         conn = e.connect()
         queryString= "select * from albums where albumartist='{}'".format(albumartist)
@@ -173,7 +208,7 @@ class Albumartist(Resource):
         return {'albums': [i[9] for i in query.cursor.fetchall()]}
 
 class Album(Resource):
-    @tokenAuth.login_required
+    @jwt_required()
     def get(self, albumartist,album):
         conn = e.connect()
         queryString= "select * from albums where albumartist='{}' and album='{}'".format(albumartist,album)
@@ -187,7 +222,7 @@ class Album(Resource):
         #return {'album': ['title':i[9],'albumartist':i[4],'year':i[5] for i in query.cursor.fetchall()]}
 
 class Song(Resource):
-    @tokenAuth.login_required
+    @jwt_required()
     def get(self,albumartist,album,song):
         conn = e.connect()
         queryString="select * from items where albumartist='{}' and album='{}' and title='{}'".format(albumartist,album,song)
@@ -202,7 +237,7 @@ class Song(Resource):
         return response
  
 class Playlist(Resource):
-    @tokenAuth.login_required
+    @jwt_required()
     def post(self):
         content = request.get_json()
         if not content:
@@ -210,19 +245,25 @@ class Playlist(Resource):
         return {'id':0}
 
 class Radiostations(Resource):
-    @tokenAuth.login_required
+    @jwt_required()
     def get(self):
         radiostations=[{"name":"Radio Paradise","url":"http://stream-eu1.radioparadise.com/aac-320"},
                         {"name":"KEXP","url":"http://live-mp3-128.kexp.org:80/kexp128.mp3"},
                         {"name":"FIP","url":"http://direct.fipradio.fr/live/fip-midfi.mp3"}]
         return radiostations
 
-class Token(Resource):
-    @basicAuth.login_required
-    def get(self):
-        token = g.user.generate_auth_token()
-        print("token: "+token.decode('ascii'))
-        return jsonify({ 'token': token.decode('ascii') })
+
+
+
+
+#class RefreshToken(Resource):
+#    @jwt_required()
+#    def get(self):
+#        token = request.headers.get('Authorization').split()[1]
+#        newToken=create_token(g.user)
+#       return {'access_token':newToken }
+
+
 
 api.add_resource(Albumartists, rootpath+'/artists') 
 api.add_resource(Albums, rootpath+'/albums')
@@ -232,7 +273,7 @@ api.add_resource(Song, rootpath+'/artists/<string:albumartist>/<string:album>/<s
 api.add_resource(Artwork, rootpath+'/artwork/artists/<string:albumartist>/<string:album>')
 api.add_resource(Playlist, rootpath+'/playlists')
 api.add_resource(Radiostations, rootpath+'/radiostations')
-api.add_resource(Token, rootpath+'/token')
+#api.add_resource(RefreshToken, rootpath+'/tokenrefresh')
 
 if __name__ == '__main__':
      app.run()

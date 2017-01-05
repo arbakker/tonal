@@ -132,19 +132,19 @@ angular.module('myApp').factory('AudioFactory', function($document) {
   return audio;
 });
 angular.module('myApp')
-  .directive('myPlayer', function(PlayerService) {
+  .directive('myPlayer', function(PlayerService, AuthService) {
   return {
       restrict: "E",
       scope: {},
       templateUrl: "./player/player.html",
       link: function (scope, element, attrs) {
         scope.myPlayerService = PlayerService;
+        scope.AuthService= AuthService;
         scope.$watch('myPlayerService.currentIndex', function(newValue, oldValue) {
-              console.log("currentIndex changed");
               if (!scope.myPlayerService.isPaused){
                 track=scope.myPlayerService.trackList[newValue];
                 scope.myPlayerService.currentSong=track;
-                console.log(scope.myPlayerService.currentSong);
+                console.log("currentSong" + scope.myPlayerService.currentSong);
               }
               else{
                 scope.myPlayerService.currentSong={};

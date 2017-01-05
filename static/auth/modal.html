@@ -1,0 +1,22 @@
+<div class="modal fade" data-backdrop="" >
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" ng-click="close(false)" data-dismiss="modal" aria-hidden="true">&times;</button>
+        <h4 class="modal-title">Sign in</h4>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+    <input class="form-control input-sm" ng-model="myAuthService.user.username" type="text" name="user" placeholder="Username" />
+    </div>
+    <div class="form-group">
+    <input class="form-control input-sm"  ng-model="myAuthService.user.password" type="password" name="pass" placeholder="Password" />
+    </div>
+    <div ng-show="myAuthService.message" class="alert alert-danger">{{myAuthService.message}}</div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" ng-click="login()" data-dismiss="modal" class="btn btn-primary">Sign in</button>
+      </div>
+    </div>
+  </div>
+</div>

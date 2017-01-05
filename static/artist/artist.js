@@ -9,12 +9,11 @@ angular.module('myApp.artist', ['ngRoute'])
   });
 }])
 
- .controller('SingleArtistController', function($scope, $http, $routeParams){
+ .controller('SingleArtistController', function($scope, $http, $routeParams,NotifyingService){
     $scope.artist=$routeParams.artistName;
-	$scope.$watch('search', function() {
-		           fetch();
-		         });
-
+	NotifyingService.subscribeAuthenticated($scope, function somethingChanged() {
+        fetch();
+    });
 	     function fetch(){
 		           $http.get("http://localhost:5000/api/v1.0/artists/" + $routeParams.artistName)
 		           .then(function(response){ 

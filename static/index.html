@@ -21,7 +21,7 @@
 <div class="header clearfix">
 
 <!--ng-controller="CollapseDemoCtrl"-->
-  <div class="navbar navbar-default navbar-fixed-top" ng-controller="NavBarCtrl">
+  <div class="navbar navbar-default" ng-controller="NavBarCtrl">
           <div class="navbar-header">
               <button class="navbar-toggle" type="button" data-toggle="collapse" 
                       ng-click="isCollapsed = !isCollapsed">
@@ -32,8 +32,8 @@
               <a class="navbar-brand" href="#/home">My Music</a>
           </div>
           <center>
-    <div class="navbar-collapse collapse" uib-collapse="isCollapsed">
-      <ul class="nav navbar-nav" bs-active-link>
+    <div class="navbar-collapse collapse" uib-collapse="isCollapsed" >
+      <ul class="nav navbar-nav" bs-active-link ng-if="AuthService.authenticated">
               <li><a href="#/home" ng-click="isCollapsed = !isCollapsed">Latest Music</a>
               </li>
               <li><a href="#/artists" ng-click="isCollapsed = !isCollapsed">Artists</a>
@@ -42,6 +42,7 @@
               </li>
               <li><a href="#/radiostations" ng-click="isCollapsed = !isCollapsed">Radiostations</a>
               </li>
+          
           </ul> 
            <my-auth></my-auth>
     </div>
@@ -62,11 +63,16 @@
 
 </div>
 
+
+<script src="bower_components/jquery/dist/jquery.min.js"></script>
+<script src="bower_components/bootstrap/dist/js/bootstrap.js"></script>
 <script src="bower_components/angular/angular.js"></script>
 <script src="bower_components/angular-route/angular-route.js"></script>
 <script src="bower_components/angular-bootstrap/ui-bootstrap.min.js"></script>
 <script src="bower_components/angular-local-storage/dist/angular-local-storage.min.js"></script>
 <script src="bower_components/angular-base64/angular-base64.js"></script>
+<script src="bower_components/angular-modal-service/dst/angular-modal-service.min.js"></script>
+<script src="bower_components/angular-animate/angular-animate.min.js"></script>
 <script src="app.js"></script>
 <script type="text/javascript" src="home/home.js"></script>
 <script type="text/javascript" src="artist/artist.js"></script>

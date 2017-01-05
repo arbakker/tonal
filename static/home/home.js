@@ -12,25 +12,40 @@ angular.module('myApp.home', ['ngRoute'])
     controller: 'MusicController'
   });
 }])
- .controller('LatestMusicController', function($scope, $http){
+ .controller('LatestMusicController', function($scope, $http,NotifyingService,AuthService){
     $scope.title="Latest Music";
-	$scope.$watch('search', function() {
-		           fetch();
-		         });
+    $scope.AuthService=AuthService;
 
-	     function fetch(){
-		           $http.get("http://localhost:5000/api/v1.0/albums?sort=latest")
-		           .then(function(response){ 
-				   $scope.albums = response.data.albums; });
-		         }
+    $scope.$watch('search', function() {
+        if ($scope.AuthService.authenticated){
+               fetch();
+           }
+    });
+    
+    NotifyingService.subscribeAuthenticated($scope, function somethingChanged() {
+        fetch();
+    });
+
+   function fetch(){
+           $http.get("http://localhost:5000/api/v1.0/albums?sort=latest")
+           .then(function(response){ 
+           $scope.albums = response.data.albums; });
+         }
 
  })
- .controller('MusicController', function($scope, $http){
+ .controller('MusicController', function($scope, $http,NotifyingService,AuthService){
     $scope.title="All Music";
-    $scope.$watch('search', function() {
-                   fetch();
-                 });
+    $scope.AuthService=AuthService;
 
+    $scope.$watch('search', function() {
+        if ($scope.AuthService.authenticated){
+               fetch();
+           }
+    });
+    
+    NotifyingService.subscribeAuthenticated($scope, function somethingChanged() {
+        fetch();
+    });
          function fetch(){
                    $http.get("http://localhost:5000/api/v1.0/albums")
                    .then(function(response){ 

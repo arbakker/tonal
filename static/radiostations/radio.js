@@ -9,13 +9,18 @@ angular.module('myApp.artist', ['ngRoute'])
   });
 }])
 
- .controller('RadioController', function($scope, $http, $routeParams,PlayerService){
+ .controller('RadioController', function($scope, $http, $routeParams,PlayerService,NotifyingService,AuthService){
     $scope.PlayerService= PlayerService;
     $scope.artist=$routeParams.artistName;
-	$scope.$watch('search', function() {
-		           fetch();
-		         });
-
+    $scope.AuthService=AuthService;
+    $scope.$watch('search', function() {
+        if ($scope.AuthService.authenticated){
+               fetch();
+           }
+    });
+	NotifyingService.subscribeAuthenticated($scope, function somethingChanged() {
+        fetch();
+    });
 	     function fetch(){
 		           $http.get("http://localhost:5000/api/v1.0/radiostations")
 		           .then(function(response){ 

@@ -10,7 +10,9 @@ var myApp=angular.module('myApp', [
   'myApp.home',
   'myApp.artists',
   'myApp.artist',
-  'myApp.album'
+  'myApp.album',
+  'angularModalService',
+  'ngAnimate'
 ]).
 config(['$routeProvider', function($routeProvider, $locationProvider) {
     //$locationProvider.hashPrefix('');
@@ -22,32 +24,35 @@ config(['$routeProvider', function($routeProvider, $locationProvider) {
     .setStorageType('sessionStorage')
     .setNotify(true, true);
 });
-myApp
-    .directive('bsActiveLink', ['$location', function ($location) {
+myApp.directive('bsActiveLink', ['$location','NotifyingService', function ($location,NotifyingService) {
     return {
         restrict: 'A', //use as attribute 
         replace: false,
         link: function (scope, elem) {
             //after the route has changed
-            scope.$on("$routeChangeSuccess", function () {
-                console.log("something");
-                var hrefs = ['/#' + $location.path(),
+            var routeChange=function () {
+              var hrefs = ['/#' + $location.path(),
                              '#' + $location.path(), //html5: false
                              $location.path()]; //html5: true
-                angular.forEach(elem.find('a'), function (a) {
-                    a = angular.element(a);
-                    if (-1 !== hrefs.indexOf(a.attr('href'))) {
-                        a.parent().addClass('active');
-                    } else {
-                        a.parent().removeClass('active');   
-                    };
-                });     
+              angular.forEach(elem.find('a'), function (a) {
+                a = angular.element(a);
+                if (-1 !== hrefs.indexOf(a.attr('href'))) {
+                  a.parent().addClass('active');
+                } else {
+                  a.parent().removeClass('active');   
+                }
+              });     
+            }
+            scope.$on('$locationChangeStart', function(event) {
+              routeChange();
             });
+            routeChange();
         }
     }
 }]);
   
-myApp.controller('NavBarCtrl', function($scope){
+myApp.controller('NavBarCtrl', function($scope, AuthService){
+   $scope.AuthService= AuthService;
    $scope.isCollapsed = true;
 });
  

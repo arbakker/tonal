@@ -9,10 +9,17 @@ angular.module('myApp.artists', ['ngRoute'])
   });
 }])
 
- .controller('ArtistsController', function($scope, $http){
-	$scope.$watch('search', function() {
-		           fetch();
-		         });
+ .controller('ArtistsController', function($scope, $http,NotifyingService,AuthService){
+    
+    $scope.AuthService=AuthService;
+    $scope.$watch('search', function() {
+        if ($scope.AuthService.authenticated){
+               fetch();
+           }
+    });
+	NotifyingService.subscribeAuthenticated($scope, function somethingChanged() {
+        fetch();
+    });
 
 	     function fetch(){
 		           $http.get("http://localhost:5000/api/v1.0/artists")

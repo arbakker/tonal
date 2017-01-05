@@ -1,15 +1,14 @@
-<div class="container-fluid">
-<div class="row">
-<h1>Radio</h1>
-	<table  class="table">
-<tr>
-		<th>Stations
-		</th>
-	</tr>
-	<tr ng-repeat="station in stations" ng-click='PlayerService.addRadio(station.url,station.name);'>
-		<td>{{station.name}}
-		</td>
-	</tr>	
+<div class="container-fluid" >
+	<div class="row" ng-if="AuthService.authenticated">
+		<h1>Radio</h1>
+		<table  class="table">
+			<tr>
+				<th>Stations</th>
+			</tr>
+			<tr ng-repeat="station in stations" ng-click='PlayerService.addRadio(station.url,station.name);'>
+				<td>{{station.name}}</td>
+			</tr>	
 		</table>
-		</div>
+	</div>
+	<ng-include ng-if="!AuthService.authenticated" src="'unauthorized.html'"></ng-include>
 </div>
