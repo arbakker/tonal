@@ -54,6 +54,13 @@ myApp.directive('bsActiveLink', ['$location','NotifyingService', function ($loca
   
 myApp.controller('NavBarCtrl', function($scope, AuthService){
    $scope.AuthService= AuthService;
+   $scope.check = function() {
+    var visible=$("#myNavBarButton").is(":visible");
+    console.log(visible);
+    if (visible) {
+        $scope.isCollapsed=!$scope.isCollapsed;
+    }
+}
    $scope.isCollapsed = true;
 });
  

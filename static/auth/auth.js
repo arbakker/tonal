@@ -3,12 +3,30 @@
 var myApp = angular.module('myApp');
 
 myApp.service('AuthService', function($http, $window,$base64,$q,NotifyingService) {
+
+  var authenticated=false;
+
+  var promise = $http.get('http://localhost:5000/api/v1.0/tokenvalidate')
+                .success(function (data) {
+                  console.log(data);
+                  authenticated = true;
+                })
+                .error(function (data, status, headers, config) {
+                  console.log(data);
+                  console.log(status);
+                  console.log(headers);
+                  console.log(config);
+                });
+  ;
+
   var myAuth = {
     user: {username: 'admin', password: 'default'},
     message: '',
     authenticated: false,
-
-    
+    getAuthenticated: function () {
+          return authenticated;//.getSomeData();
+    },
+    promise: promise,
     submit: function(){
       //var auth = $base64.encode(user.username + ":" + user.password);
       //var headers = {"Authorization": "Basic " + auth};
@@ -134,7 +152,8 @@ myApp.factory('authInterceptor',['$rootScope', '$q', '$window','$base64','Notify
       return response || $q.when(response);
     },
     responseError: function(rejection){
-      if (!rejection.config.url.endsWith('token')){
+      console.log(rejection.config.url);
+      if (!(rejection.config.url.endsWith('token') || rejection.config.url.endsWith('tokenvalidate'))){
         console.log("intercepted");
         if (rejection.status===401) {
           NotifyingService.notifyAuthExpired();

@@ -71,23 +71,23 @@ class ExceptionAwareApi(Api):
     def handle_error(self, e):
         if isinstance(e, JWTError):
             print("JWTError")
+            print(e.message)
             code = 401
-            data = {'status_code': code, 'message': "Token is expired."}
+            data = {'status_code': code, 'description': "JWT token is expired", 'error': 'Invalid token'}
         elif isinstance(e, pyjwt.exceptions.ExpiredSignatureError):
             print("ExpiredSignatureError")
+            print(e.message)
             code = 401
-            data = {'status_code': code, 'message': "Token is expired."}
+            data = {'status_code': code, 'description': "Signature has expired", 'error': 'Invalid token'}
         else:
-            # Did not match a custom exception, continue normally
-            return super(ExceptionAwareApi, self).handle_error(e)
+            return super(ExceptionAwareApi, self).handle_error(e)            
         return self.make_response(data, code)
-
 
 
 e = create_engine(dbConnectionString)
 db = SQLAlchemy(app)
 
-api = ExceptionAwareApi(app)
+api =  ExceptionAwareApi(app)
 jwt = JWT(app, authenticate, identity)
 
 
@@ -253,7 +253,10 @@ class Radiostations(Resource):
         return radiostations
 
 
-
+class ValidateToken(Resource):
+    @jwt_required()
+    def get(self):
+       return {'token_valid':'true' }
 
 
 #class RefreshToken(Resource):
@@ -273,6 +276,7 @@ api.add_resource(Song, rootpath+'/artists/<string:albumartist>/<string:album>/<s
 api.add_resource(Artwork, rootpath+'/artwork/artists/<string:albumartist>/<string:album>')
 api.add_resource(Playlist, rootpath+'/playlists')
 api.add_resource(Radiostations, rootpath+'/radiostations')
+api.add_resource(ValidateToken, rootpath+'/tokenvalidate')
 #api.add_resource(RefreshToken, rootpath+'/tokenrefresh')
 
 if __name__ == '__main__':

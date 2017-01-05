@@ -2,9 +2,15 @@
 
 angular.module('myApp.home', ['ngRoute'])
 
-.config(['$routeProvider', function($routeProvider) {
+.config(['$routeProvider', function($routeProvider, AuthService) {
   $routeProvider.when('/home', {
     templateUrl: 'home/home.html',
+    resolve:{
+      'MyServiceData':function(AuthService){
+        // MyServiceData will also be injectable in your controller, if you don't want this you could create a new promise with the $q service
+        return AuthService.promise;
+      }
+    },
     controller: 'LatestMusicController'
   });
    $routeProvider.when('/albums', {
@@ -12,10 +18,11 @@ angular.module('myApp.home', ['ngRoute'])
     controller: 'MusicController'
   });
 }])
- .controller('LatestMusicController', function($scope, $http,NotifyingService,AuthService){
+ .controller('LatestMusicController', function($scope, $http, NotifyingService, AuthService){
     $scope.title="Latest Music";
-    $scope.AuthService=AuthService;
-
+    $scope.AuthService= AuthService;
+    $scope.AuthService.authenticated=AuthService.getAuthenticated();
+    
     $scope.$watch('search', function() {
         if ($scope.AuthService.authenticated){
                fetch();

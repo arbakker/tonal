@@ -4,9 +4,6 @@ angular.module('myApp').service('PlayerService', function($window,AudioFactory,l
     // Sample tracks, to be replaced by the audio files you actually want to use
     trackList: [
      // { url: "" , artist: "" , album: "", title: "" }    
-     // 'http://localhost:5000/api/v1.0/artists/Astral%20Aperture/Frenzied%20Eye/Full%20Moon',
-     // 'http://localhost:5000/api/v1.0/artists/Astral%20Aperture/Frenzied%20Eye/Sacred%20Valley', 
-     // 'http://localhost:5000/api/v1.0/artists/Astral%20Aperture/Frenzied%20Eye/Void%20Walker'
     ],
     currentIndex: null,
     currentSong: {},

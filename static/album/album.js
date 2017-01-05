@@ -2,15 +2,22 @@
 
 angular.module('myApp.album', ['ngRoute'])
 
-.config(['$routeProvider', function($routeProvider) {
+.config(['$routeProvider', function($routeProvider, AuthService) {
   $routeProvider.when('/artist/:artistName/:album', {
     templateUrl: 'album/album.html',
-    controller: 'AlbumController'
+    resolve:{
+      'MyServiceData':function(AuthService){
+        // MyServiceData will also be injectable in your controller, if you don't want this you could create a new promise with the $q service
+        return AuthService.promise;
+      }
+    },
+    controller: 'AlbumController',
   });
 }])
  .controller('AlbumController', function($scope, $http, $routeParams, PlayerService, AuthService,NotifyingService){
     $scope.PlayerService= PlayerService;
     $scope.AuthService= AuthService;
+    $scope.AuthService.authenticated=AuthService.getAuthenticated();
     $scope.artist=$routeParams.artistName;
     
 
