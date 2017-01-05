@@ -13,6 +13,7 @@ from tempfile import NamedTemporaryFile
 from shutil import copyfileobj
 import urllib.parse as urlparse
 import os
+import flask_jwt
 from flask_jwt import JWT, jwt_required, current_identity,JWTError
 from werkzeug.security import safe_str_cmp
 from datetime import datetime, timedelta
@@ -27,6 +28,27 @@ app.config['JWT_AUTH_URL_RULE']=rootpath+"/token"
 app.config['JWT_EXPIRATION_DELTA']=timedelta(seconds=3600)
 
 app._static_folder = os.path.abspath("static/")
+
+def request_handler():
+    auth_header_value = request.headers.get('Authorization', None)
+    auth_header_prefix = current_app.config['JWT_AUTH_HEADER_PREFIX']
+    # extract token from url
+    token_parameter = request.args.get('token')
+    if token_parameter:
+        return token_parameter
+    # url does not contain a parameter token
+    if not auth_header_value:
+        return
+    parts = auth_header_value.split()
+    if parts[0].lower() != auth_header_prefix.lower():
+        raise JWTError('Invalid JWT header', 'Unsupported authorization type')
+    elif len(parts) == 1:
+        raise JWTError('Invalid JWT header', 'Token missing')
+    elif len(parts) > 2:
+        raise JWTError('Invalid JWT header', 'Token contains spaces')
+    return parts[1]
+
+flask_jwt._default_request_handler = request_handler
 
 def verify_password(username, password):
     # first try to authenticate by token
@@ -44,6 +66,8 @@ def authenticate(username, password):
     print("jwt auth")
     if verify_password(username,password):
         return g.user
+    else:
+        abort(401)
 
 def identity(payload):
     user_id = payload['identity']
@@ -87,6 +111,8 @@ class ExceptionAwareApi(Api):
 e = create_engine(dbConnectionString)
 db = SQLAlchemy(app)
 
+
+
 api =  ExceptionAwareApi(app)
 jwt = JWT(app, authenticate, identity)
 
@@ -111,22 +137,6 @@ class User(db.Model):
     def generate_auth_token(self, expiration = 600):
         s = Serializer(app.config['SECRET_KEY'], expires_in = expiration)
         return s.dumps({ 'id': self.id })
-
-    @staticmethod
-    def verify_auth_token(token):
-        s = Serializer(app.config['SECRET_KEY'])
-        token=token.replace("Bearer ","")
-        print("token:" + token)
-        try:
-            data = s.loads(token)
-        except SignatureExpired:
-            print("SignatureExpired")
-            return None # valid token, but expired
-        except BadSignature:
-            print("BadSignature")
-            return None # invalid token
-        user = User.query.get(data['id'])
-        return user
 
 
 class Playlist(db.Model):
