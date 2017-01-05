@@ -24,7 +24,7 @@ rootpath="/api/v1.0"
 app.config['SQLALCHEMY_DATABASE_URI'] = dbConnectionString
 app.config['SECRET_KEY']='\xcafW-\xbeX\x98-\x1a\xb2g\xc1\x0e\x87\xb2\x83[\xa0\x0fi/\x18\x85\xda'
 app.config['JWT_AUTH_URL_RULE']=rootpath+"/token"
-app.config['JWT_EXPIRATION_DELTA']=timedelta(seconds=1)
+app.config['JWT_EXPIRATION_DELTA']=timedelta(seconds=3600)
 
 app._static_folder = os.path.abspath("static/")
 

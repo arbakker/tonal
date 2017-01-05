@@ -1,6 +1,6 @@
 'use strict';
 
-angular.module('myApp.artist', ['ngRoute'])
+angular.module('myApp.radio', ['ngRoute'])
 
 .config(['$routeProvider', function($routeProvider) {
   $routeProvider.when('/radiostations', {

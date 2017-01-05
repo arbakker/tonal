@@ -7,6 +7,8 @@ myApp.service('AuthService', function($http, $window,$base64,$q,NotifyingService
     user: {username: 'admin', password: 'default'},
     message: '',
     authenticated: false,
+
+    
     submit: function(){
       //var auth = $base64.encode(user.username + ":" + user.password);
       //var headers = {"Authorization": "Basic " + auth};

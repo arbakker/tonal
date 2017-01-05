@@ -29,7 +29,7 @@
         alt="Album cover" 
         class="img-responsive" 
         style="max-width:15em;" 
-        ng-hide="myPlayerService.currentSongString=='Paused' || myPlayerService.currentSong.isRadio"
+        ng-if="myPlayerService.currentSongString!=='Paused' || myPlayerService.currentSong.isRadio"
         />  
         <!---->
     </div>

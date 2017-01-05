@@ -11,6 +11,7 @@ var myApp=angular.module('myApp', [
   'myApp.artists',
   'myApp.artist',
   'myApp.album',
+  'myApp.radio',
   'angularModalService',
   'ngAnimate'
 ]).
