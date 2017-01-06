@@ -25,11 +25,16 @@ angular.module('myApp.album', ['ngRoute'])
         if ($scope.AuthService.authenticated){
                fetch();
            }
+           else{
+              $scope.AuthService.tokenValidate();
+           }
     });
     NotifyingService.subscribeAuthenticated($scope, function somethingChanged() {
         fetch();
     });
-
+    NotifyingService.subscribeAuthenticatedInit($scope, function initAuthenticated() {
+        fetch();
+    });
     function fetch(){
         console.log("fetch");
         $http.get("http://localhost:5000/api/v1.0/artists/" + $routeParams.artistName + "/" + $routeParams.album)

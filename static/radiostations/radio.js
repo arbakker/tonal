@@ -6,12 +6,6 @@ angular.module('myApp.radio', ['ngRoute'])
   $routeProvider.when('/radiostations', {
     templateUrl: 'radiostations/radio.html',
     controller: 'RadioController',
-    resolve:{
-      'MyServiceData':function(AuthService){
-        // MyServiceData will also be injectable in your controller, if you don't want this you could create a new promise with the $q service
-        return AuthService.promise;
-      }
-    }
   });
 }])
 
@@ -19,13 +13,19 @@ angular.module('myApp.radio', ['ngRoute'])
     $scope.PlayerService= PlayerService;
     $scope.artist=$routeParams.artistName;
     $scope.AuthService=AuthService;
-    $scope.AuthService.authenticated=AuthService.getAuthenticated();
+    
     $scope.$watch('search', function() {
         if ($scope.AuthService.authenticated){
                fetch();
            }
+           else{
+              $scope.AuthService.tokenValidate();
+           }
     });
 	NotifyingService.subscribeAuthenticated($scope, function somethingChanged() {
+        fetch();
+    });
+  NotifyingService.subscribeAuthenticatedInit($scope, function initAuthenticated() {
         fetch();
     });
 	     function fetch(){

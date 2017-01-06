@@ -6,17 +6,8 @@ myApp.service('AuthService', function($http, $window,$base64,$q,NotifyingService
 
   var authenticated=false;
 
-  var promise = $http.get('http://localhost:5000/api/v1.0/tokenvalidate')
-                .success(function (data) {
-                  console.log(data);
-                  authenticated = true;
-                })
-                .error(function (data, status, headers, config) {
-                  console.log(data);
-                  console.log(status);
-                  console.log(headers);
-                  console.log(config);
-                });
+  
+                
   ;
 
   var myAuth = {
@@ -26,7 +17,17 @@ myApp.service('AuthService', function($http, $window,$base64,$q,NotifyingService
     getAuthenticated: function () {
           return authenticated;//.getSomeData();
     },
-    promise: promise,
+    tokenValidate: function(){
+      $http.get('http://localhost:5000/api/v1.0/tokenvalidate')
+      .success(function (data) {
+          myAuth.authenticated = true;
+          NotifyingService.notifyAuthenticatedInit();
+      })
+      .error(function (data, status, headers, config) {
+          NotifyingService.notifyNotAuthenticatedInit();
+      });
+
+    },
     submit: function(){
       //var auth = $base64.encode(user.username + ":" + user.password);
       //var headers = {"Authorization": "Basic " + auth};
@@ -111,6 +112,20 @@ myApp.service("LoginModalService", ['ModalService','AuthService', function(Modal
 
 myApp.service('NotifyingService', function($rootScope) {
     return {
+        subscribeAuthenticatedInit: function(scope, callback) {
+            var handler = $rootScope.$on('authenticatedInit-event', callback);
+            scope.$on('$destroy', handler);
+        },
+        notifyAuthenticatedInit: function() {
+            $rootScope.$emit('authenticatedInit-event');
+        },
+        subscribeNotAuthenticatedInit: function(scope, callback) {
+            var handler = $rootScope.$on('notAuthenticatedInit-event', callback);
+            scope.$on('$destroy', handler);
+        },
+        notifyNotAuthenticatedInit: function() {
+            $rootScope.$emit('notAuthenticatedInit-event');
+        },
         subscribeAuthenticated: function(scope, callback) {
             var handler = $rootScope.$on('authenticated-event', callback);
             scope.$on('$destroy', handler);

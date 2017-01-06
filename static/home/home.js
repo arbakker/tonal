@@ -1,35 +1,35 @@
 'use strict';
 
 angular.module('myApp.home', ['ngRoute'])
-
-.config(['$routeProvider', function($routeProvider, AuthService) {
-  $routeProvider.when('/home', {
-    templateUrl: 'home/home.html',
-    resolve:{
-      'MyServiceData':function(AuthService){
-        // MyServiceData will also be injectable in your controller, if you don't want this you could create a new promise with the $q service
-        return AuthService.promise;
-      }
-    },
-    controller: 'LatestMusicController'
-  });
+.config(['$routeProvider', function($routeProvider) {
+    $routeProvider.when('/home', {
+      templateUrl: 'home/home.html',
+      controller: 'LatestMusicController'
+    });
    $routeProvider.when('/albums', {
     templateUrl: 'home/home.html',
     controller: 'MusicController'
   });
 }])
+
  .controller('LatestMusicController', function($scope, $http, NotifyingService, AuthService){
     $scope.title="Latest Music";
     $scope.AuthService= AuthService;
-    $scope.AuthService.authenticated=AuthService.getAuthenticated();
     
     $scope.$watch('search', function() {
         if ($scope.AuthService.authenticated){
                fetch();
+        }
+          else{
+              $scope.AuthService.tokenValidate();
            }
     });
+
+    NotifyingService.subscribeAuthenticatedInit($scope, function initAuthenticated() {
+        fetch();
+    });
     
-    NotifyingService.subscribeAuthenticated($scope, function somethingChanged() {
+    NotifyingService.subscribeAuthenticated($scope, function authenticated() {
         fetch();
     });
 
@@ -48,8 +48,13 @@ angular.module('myApp.home', ['ngRoute'])
         if ($scope.AuthService.authenticated){
                fetch();
            }
+           else{
+              $scope.AuthService.tokenValidate();
+           }
     });
-    
+    NotifyingService.subscribeAuthenticatedInit($scope, function initAuthenticated() {
+        fetch();
+    });
     NotifyingService.subscribeAuthenticated($scope, function somethingChanged() {
         fetch();
     });
