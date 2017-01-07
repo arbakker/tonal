@@ -44,17 +44,24 @@
             <span class="glyphicon glyphicon-remove" ng-click="myPlayerService.clearPlaylist();"> </span>
         </button> </h1>
 
-        <table class="table" >
-        <tr ng-repeat="track in myPlayerService.trackList track by $index" 
-            ng-class="{true: 'active', false: 'inactive'}[ $index== myPlayerService.currentIndex]"
-            ng-click="myPlayerService.playTrack(track)" >
-           <td><button  title="Remove from playlist" type="button" class="btn btn-default btn-sm"  ng-click="myPlayerService.remove(track)" ><span class="glyphicon glyphicon-remove" ></span></button></td>
-           <td ng-if="!track.isRadio">{{track.artist}} - {{track.title}}</td>
-           <td ng-if="track.isRadio">{{track.title}}</td>
-        </tr>
+        <ul class="list-group">
+            <li href="#" class="list-group-item list-group-item-action clearfix"
+                ng-repeat="track in myPlayerService.trackList track by $index" 
+                ng-class="{true: 'active', false: 'inactive'}[ $index== myPlayerService.currentIndex]"
+                ng-click="myPlayerService.playTrack(track)">
+                      <button  title="Remove from playlist" type="button" class="btn btn-default btn-sm pull-left"  ng-click="myPlayerService.remove(track)"  ><span class="glyphicon glyphicon-remove" ></span></button>
+                      <span ng-if="!track.isRadio">
+                            {{track.artist}} - {{track.title}}
+                      </span>
 
-        </table>
+                         <span ng-if="track.isRadio">
+                         {{track.title}}
+                         </span>
+            </li>
+        </ul>
+
+
+
         
     </div>   
-</div>
 </div>

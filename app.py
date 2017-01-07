@@ -18,9 +18,10 @@ from flask_jwt import JWT, jwt_required, current_identity,JWTError
 from werkzeug.security import safe_str_cmp
 from datetime import datetime, timedelta
 import jwt  as pyjwt
-
+import time
+from pagination.py import Pagination
 app = Flask(__name__)
-dbConnectionString='sqlite:///music.db'
+dbConnectionString='sqlite:///musiclibrary.db'
 rootpath="/api/v1.0"
 app.config['SQLALCHEMY_DATABASE_URI'] = dbConnectionString
 app.config['SECRET_KEY']='\xcafW-\xbeX\x98-\x1a\xb2g\xc1\x0e\x87\xb2\x83[\xa0\x0fi/\x18\x85\xda'
@@ -121,7 +122,7 @@ class User(db.Model):
     def __init__(self, id, username, password_hash):
         self.id = id
         self.username = username
-        self.password_hash = password_hash
+        self.generate_password_hash = password_hash
 
     __tablename__ = 'users'
     id = db.Column(db.Integer, primary_key = True)
@@ -164,25 +165,30 @@ def serve_static(filename):
 class Artwork(Resource):
     @jwt_required()
     def get(self,albumartist,album):
-        conn = e.connect()
-        queryString="select * from items where albumartist='{}' and album='{}' order by track ASC".format(albumartist,album)
-        query = conn.execute(queryString)
-        songObject =query.first()
-        path=songObject[52].decode('utf-8')
-        file = File(path)
-        #for tag in file.tags:
-        #    print(tag)
-        imageData = file.tags['APIC:cover'].data
-        tempFileObj = NamedTemporaryFile(mode='w+b',suffix='jpg')
-        with open('myfile.jpg','wb') as img:
-            img.write(imageData) # write artwork to new image
-        with open('myfile.jpg','rb') as img:
-            copyfileobj(img,tempFileObj)
-        os.remove('myfile.jpg')
-        tempFileObj.seek(0,0)
-        response = send_file(tempFileObj, as_attachment=True, attachment_filename='myfile.jpg')
+        try:
+            conn = e.connect()
+            queryString="select * from items where albumartist='{}' and album='{}' order by track ASC".format(albumartist,album)
+            query = conn.execute(queryString)
+            songObject =query.first()
+            path=songObject[52].decode('utf-8')       
+            file = File(path)
+
+            #for tag in file.tags:
+            #    print(tag)
+            imageData = file.tags['APIC:cover'].data
+            tempFileObj = NamedTemporaryFile(mode='w+b',suffix='jpg')
+            with open('myfile.jpg','wb') as img:
+                img.write(imageData) # write artwork to new image
+            with open('myfile.jpg','rb') as img:
+                copyfileobj(img,tempFileObj)
+            os.remove('myfile.jpg')
+            tempFileObj.seek(0,0)
+            response = send_file(tempFileObj, as_attachment=True, attachment_filename='myfile.jpg',mimetype='image/jpg')
+        except:
+            response= send_file('album_placeholder.jpg', mimetype='image/jpg')
+
         return response
-        
+            
 
 class Albums(Resource):
     @jwt_required()
@@ -221,10 +227,13 @@ class Album(Resource):
     @jwt_required()
     def get(self, albumartist,album):
         conn = e.connect()
-        queryString= "select * from albums where albumartist='{}' and album='{}'".format(albumartist,album)
-        queryStringSongs="select * from items where albumartist='{}' and album='{}' order by track ASC".format(albumartist,album)
-        query = conn.execute(queryString)
-        querySongs = conn.execute(queryStringSongs)
+        
+        sqlAlbum =  "select * from albums where albumartist=:albumartist and album=:album"
+        query = conn.execute(sqlAlbum,albumartist = albumartist, album=album)
+
+        sqlSongs = "select * from items where albumartist=:albumartist and album=:album order by track ASC"
+        querySongs = conn.execute(sqlSongs, albumartist = albumartist, album=album)
+
         albumObject =query.first()
         app_url=request.url_root+rootpath[1:]
         tracks = [{'id':i[36],'title':i[9], 'track':i[48], 'artist':i[22],'albumartist':i[32],'album':i[37], 'url': app_url+"/artists/{}/{}/{}".format(i[32],i[37],i[9]) } for i in querySongs.cursor.fetchall()]
@@ -234,17 +243,23 @@ class Album(Resource):
 class Song(Resource):
     @jwt_required()
     def get(self,albumartist,album,song):
-        conn = e.connect()
-        queryString="select * from items where albumartist='{}' and album='{}' and title='{}'".format(albumartist,album,song)
-        query = conn.execute(queryString)
-        songObject =query.first()
-        if isinstance(songObject[52], str):
-            path=songObject[52]
-        else:
-            path=songObject[52].decode('utf-8')
-        response = make_response(send_file(path))
-        response.headers['Content-Type'] = 'audio/mpeg'
-        return response
+        try:
+            conn = e.connect()
+            queryString="select * from items where albumartist='{}' and album='{}' and title='{}'".format(albumartist,album,song)
+            query = conn.execute(queryString)
+            songObject =query.first()
+            if isinstance(songObject[52], str):
+                path=songObject[52]
+            else:
+                path=songObject[52].decode('utf-8')
+            response = make_response(send_file(path))
+            response.headers['Content-Type'] = 'audio/mpeg'
+            return response
+        except FileNotFoundError:
+            abort(404)
+        except:
+            abort(400)
+
  
 class Playlist(Resource):
     @jwt_required()
@@ -275,8 +290,6 @@ class ValidateToken(Resource):
 #        token = request.headers.get('Authorization').split()[1]
 #        newToken=create_token(g.user)
 #       return {'access_token':newToken }
-
-
 
 api.add_resource(Albumartists, rootpath+'/artists') 
 api.add_resource(Albums, rootpath+'/albums')

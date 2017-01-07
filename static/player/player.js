@@ -12,7 +12,7 @@ angular.module('myApp').service('PlayerService', function($window,AudioFactory,l
     currentSongString: "Paused",
     audio: AudioFactory,
     saveTrackList: function(trackList){
-      localStorageService.set("trackList", trackList);
+      localStorageService.set("trackList", myPlayer.trackList);
     },
     loadTrackList: function(){
       return localStorageService.get("trackList");
@@ -31,9 +31,15 @@ angular.module('myApp').service('PlayerService', function($window,AudioFactory,l
     },
     add: function(track){
       //'http://localhost:5000/api/v1.0/artists/{{album.albumartist}}/{{album.title}}/{{song}}'
-      console.log(track);
+      var selectFirst=false;
+      if (myPlayer.currentIndex==null){
+        selectFirst=true;
+      }
       myPlayer.trackList.push(track);
       myPlayer.saveTrackList(myPlayer.trackList);
+      if (selectFirst){
+        myPlayer.currentIndex=0;
+      }
     },
     addAlbum: function(tracks){
       tracks.forEach(function(track) {
@@ -57,11 +63,16 @@ angular.module('myApp').service('PlayerService', function($window,AudioFactory,l
                   var url= myPlayer.trackList[myPlayer.currentIndex].url + "?token=" + auth;
                   console.log(url);
                   AudioFactory.src = url;
+                  AudioFactory.load();
                   AudioFactory.play();
                   myPlayer.isPaused = false;
                   console.log(myPlayer.currentSong);
                 }
             },
+    stop: function(){
+      AudioFactory.pause();
+      AudioFactory.currentTime = 0;
+    },
     pause: function () {
                 myPlayer.isPaused = !myPlayer.isPaused;
                 if (myPlayer.isPaused) {
@@ -121,6 +132,7 @@ angular.module('myApp').service('PlayerService', function($window,AudioFactory,l
   var loadTrackList = myPlayer.loadTrackList();
   if (loadTrackList){
     myPlayer.trackList=loadTrackList;  
+    myPlayer.currentIndex=0;
   }
   return myPlayer;
 });
@@ -129,13 +141,19 @@ angular.module('myApp').factory('AudioFactory', function($document) {
   return audio;
 });
 angular.module('myApp')
-  .directive('myPlayer', function(PlayerService, AuthService) {
+  .directive('myPlayer', function($window,PlayerService, AuthService) {
   return {
       restrict: "E",
       scope: {},
       templateUrl: "./player/player.html",
       link: function (scope, element, attrs) {
         scope.myPlayerService = PlayerService;
+        var windowElement = angular.element($window);
+        windowElement.on('beforeunload', function (event) {
+          scope.myPlayerService.stop();
+        });
+        
+        
         scope.AuthService= AuthService;
         scope.$watch('myPlayerService.currentIndex', function(newValue, oldValue) {
               if (!scope.myPlayerService.isPaused){

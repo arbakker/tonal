@@ -1,19 +1,21 @@
 <div class="container-fluid" >
 <div class="row" ng-show="AuthService.authenticated">
-	<h1>{{title}}</h1>
-	<table  class="table">
-<tr>
-		<th>Album
-		</th>
-		<th>Album artist
-		</th>
-	</tr>
-	<tr ng-repeat="album in albums">
-		<td><a ng-href="#/artist/{{album.albumartist}}/{{album.album}}">{{album.album}}</a>
-		</td>
-		<td><a ng-href="#/artist/{{album.albumartist}}">{{album.albumartist}}</a>
-		</td>
-	</tr>	
+
+	<div class="col-xs-12 col-sm-12 col-md-12 col-lg-12 ">
+		<h1>{{title}}</h1>
+		<table  class="table">
+			<tr>
+				<th>Album</th>
+				<th>Album artist</th>
+			</tr>
+			<tr ng-repeat="album in albums">
+				<td><a ng-href="#/artist/{{album.albumartist}}/{{album.album}}">{{album.album}}</a>
+				</td>
+				<td><a ng-href="#/artist/{{album.albumartist}}">{{album.albumartist}}</a>
+				</td>
+			</tr>	
 		</table>
+	</div>
+
 </div>
 </div>
