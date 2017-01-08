@@ -1,6 +1,6 @@
-from flask import Flask, request, Response, current_app, make_response, send_file, g, jsonify, abort
+from flask import Flask, request, Response, current_app, make_response, send_file, g, jsonify, abort, redirect,render_template,url_for
 from flask_httpauth import HTTPBasicAuth, HTTPTokenAuth
-from flask_restful import Resource, Api
+from flask_restful import Resource, Api,reqparse
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.exceptions import Unauthorized
@@ -19,7 +19,8 @@ from werkzeug.security import safe_str_cmp
 from datetime import datetime, timedelta
 import jwt  as pyjwt
 import time
-from pagination.py import Pagination
+from pagination import Pagination
+
 app = Flask(__name__)
 dbConnectionString='sqlite:///musiclibrary.db'
 rootpath="/api/v1.0"
@@ -27,6 +28,8 @@ app.config['SQLALCHEMY_DATABASE_URI'] = dbConnectionString
 app.config['SECRET_KEY']='\xcafW-\xbeX\x98-\x1a\xb2g\xc1\x0e\x87\xb2\x83[\xa0\x0fi/\x18\x85\xda'
 app.config['JWT_AUTH_URL_RULE']=rootpath+"/token"
 app.config['JWT_EXPIRATION_DELTA']=timedelta(seconds=3600)
+
+app.config['PER_PAGE'] = 30
 
 app._static_folder = os.path.abspath("static/")
 
@@ -193,7 +196,11 @@ class Artwork(Resource):
 class Albums(Resource):
     @jwt_required()
     def get(self):
-        sort = request.args.get("sort")
+        parser = reqparse.RequestParser()
+        parser.add_argument('sort')
+        args = parser.parse_args()
+
+        sort = args['sort']
         #Connect to databse
         conn = e.connect()
         #Perform query and return JSON data
@@ -203,17 +210,83 @@ class Albums(Resource):
             query = conn.execute("select * from albums order by album ASC")
         return {'albums': [{'album':i[9],'albumartist':i[4]} for i in query.cursor.fetchall()]}
 
+
+def url_for_other_page(page):
+    args = request.view_args.copy()
+    print('url_for_other_page page: ' + str(page))
+    args['page'] = page
+    print(request.endpoint)
+    return url_for(request.endpoint, **args)
+
+app.jinja_env.globals.update(url_for_other_page=url_for_other_page)
+
 class Albumartists(Resource):
     @jwt_required()
     def get(self):
+            parser = reqparse.RequestParser()
+            parser.add_argument('page',type=int)
+            args = parser.parse_args()
+            page = args['page']
+
+            if page is None:
+                page=1
+            elif page<1:
+                abort(404)
+            
+            count = self.count_all_artists()
+
+            pagination = Pagination(page, app.config['PER_PAGE'], count)
+            page_count=pagination.pages
+
+            if page>page_count:
+                abort(404)
+
+            artists = self.get_artist_for_page(page, app.config['PER_PAGE'], count)
+            for artist in artists:
+                print(artist)
+            if not artists and page != 1:
+                abort(404)
+            
+            data = {}
+            data['albumartists'] = artists
+            data['_metadata'] = {}
+            data['_metadata']['page']=pagination.page
+            data['_metadata']['per_page']=pagination.per_page
+            data['_metadata']['page_count']=page_count
+            data['_metadata']['total_count']=pagination.total_count
+            data['_metadata']['pages']=[]
+
+            for page in pagination.iter_pages():
+                if page:
+                    if page!=pagination.page:
+                         data['_metadata']['pages'].append({'page':page,'url':url_for_other_page(page)})
+            
+            return jsonify(data)
+       
+            abort(500)
+
+    def count_all_artists(self):
         conn = e.connect()
-        query = conn.execute("select distinct albumartist from albums")
-        #where Department='%s'"%department_name.upper())
-        #Query the result and get cursor.Dumping that data to a JSON is looked by extension
-        #result = {'data': [dict(zip(tuple (query.keys()) ,i)) for i in query.cursor]}
-        result = {'albumartists': [i[0] for i in query.cursor.fetchall()]}
+        sql= 'select count(distinct albumartist) from albums'
+        query = conn.execute(sql)
+        result=query.first()
+        # result is tuple with first item containing the count
+        return result[0]
+
+    def get_artist_for_page(self,page, limit, count):
+        conn = e.connect()
+
+        offset=limit*(page-1)
+        if count>offset:
+            sql = "select distinct albumartist as artist from albums limit :limit offset :offset"
+            query = conn.execute(sql, limit = limit, offset=offset)
+            result=query.cursor.fetchall()
+             # result is tuple with first item containing artist
+            result=[ "%s" % x for x in result ]
+        else:
+            result=[]
+
         return result
-        #We can have PUT,DELETE,POST here. But in our API GET implementation is sufficient
 
 class Albumartist(Resource):
     @jwt_required()

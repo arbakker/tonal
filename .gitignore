@@ -8,5 +8,8 @@ bower_components/
 node_modules/
 *.py[cod]
 
+# application specific
+musiclibrary.db
+
 # Mac OS X custom attribute files
 .DS_Store
