@@ -1,5 +1,5 @@
 # tonal
-Music library web app and REST API
+Music library web app and REST API. Unfinished.
 
 
 Web app is located in the folder `static`. 
